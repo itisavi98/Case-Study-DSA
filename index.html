@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Tracking System: DLL Case Study</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            color: #1f2937; /* Dark text */
+        }
+        .header-bg {
+            background: linear-gradient(90deg, #1d4ed8, #2563eb); /* Deep Blue Gradient */
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.5);
+        }
+        .node-card {
+            min-width: 220px;
+            background-color: white;
+            border: 1px solid #93c5fd; /* Light blue border */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .node-card:hover {
+            box-shadow: 0 8px 15px rgba(30, 64, 175, 0.2);
+            transform: translateY(-3px) scale(1.02);
+            z-index: 10;
+        }
+        .link-arrow {
+            color: #3b82f6;
+            font-size: 2.5rem;
+            margin: 0 8px;
+            align-self: center;
+            font-weight: 900;
+            line-height: 1;
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        /* Styling for the status message box */
+        #outputMessage {
+            border-left-width: 4px;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <header class="header-bg">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <h1 class="text-4xl font-extrabold text-white tracking-tight">
+                Logistics DLL Simulation
+            </h1>
+            <p class="text-blue-200 mt-1 text-xl">Doubly Linked List for Dynamic Order Tracking</p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        
+        <!-- Case Study Overview & Context -->
+        <section class="mb-12 p-8 section-card">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b-2 pb-3">Case Study Overview: Dynamic Data for E-commerce</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                
+                <!-- Col 1: Core Challenge & Objective -->
+                <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                    <h3 class="text-xl font-bold mb-2 text-blue-600">The Challenge</h3>
+                    <p class="text-gray-600 mb-3 text-sm">Online tracking demands real-time, flexible updates. Arrays struggle with frequent insertions (new orders) and deletions (cancellations/delivery completions).</p>
+                    <p class="font-medium text-blue-700 mt-3">Objective : Model dynamic order flow using a Doubly Linked List for O(1) insertion/deletion efficiency.</p>
+                </div>
+
+                <!-- Col 2: DLL Advantages (Why it works) -->
+                <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                    <h3 class="text-xl font-bold mb-2 text-green-600">DLL Advantages in Logistics</h3>
+                    <ul class="space-y-1 text-gray-700 text-sm list-disc list-inside">
+                        <li>Dynamic Size : Easily accommodates infinite new orders.</li>
+                        <li>Fast Updates : O(1) complexity for status changes.</li>
+                        <li>Bi-directional : Easily trace history (backward) or predict flow (forward).</li>
+                        <li>Centralized Hub : Every order (node) is logically connected.</li>
+                    </ul>
+                </div>
+                
+                <!-- Col 3: Future Scope & Trade-offs -->
+                <div class="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                    <h3 class="text-xl font-bold mb-2 text-yellow-700">Trade-offs & Scaling</h3>
+                    <ul class="space-y-1 text-gray-700 text-sm list-disc list-inside">
+                        <li>Trade-off : Needs More memory (extra pointer prev).</li>
+                        <li>Complex implementation compared to singly linked list.</li>
+                        <li>Future : Combine DLL with a Hash Map for O(1) lookup and O(1) updates/deletions.</li>
+                        <li>Real-World : Systems like Amazon or Zomato use this blended approach (Hash Map TO DLL Node).</li>
+                    </ul>
+                </div>
+
+            </div>
+        </section>
+        
+        <!-- Interactive DLL Tracking Demo -->
+        <section class="p-8 section-card">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b-2 pb-3">DLL Simulation: Real-Time Order Management</h2>
+            <p class="mb-6 text-gray-700">Perform standard Doubly Linked List operations to manage and visualize the order flow.</p>
+
+            <!-- Status Message Box -->
+            <div id="outputMessage" class="p-4 mb-8 font-semibold text-center text-blue-800 bg-blue-100 border-blue-400">
+                System Initialized: Three sample orders (101, 102, 103) are ready.
+            </div>
+
+            <!-- Inputs and Controls (Grouped) -->
+            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">1. Order Details</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <input id="orderId" type="number" placeholder="Order ID (e.g., 104)" 
+                           class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150" min="1">
+                    
+                    <select id="statusSelect" class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <option value="" disabled selected>Select Status</option>
+                        <option value="Placed">Placed</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Packed">Packed</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Delivered">Delivered (Final)</option>
+                        <option value="Cancelled">Cancelled/Deleted</option>
+                    </select>
+
+                    <input id="customerInfo" type="text" placeholder="Customer Name/Location (Optional)" 
+                           class="p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
+
+                <h3 class="text-xl font-semibold mt-6 mb-4 text-gray-700">2. DLL Operations</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <button onclick="addOrder()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 transform hover:scale-105">
+                        ➕ Add Order (Insert)
+                    </button>
+                    <button onclick="updateStatus()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 transform hover:scale-105">
+                        📝 Update Status
+                    </button>
+                    <button onclick="deleteOrder()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 transform hover:scale-105">
+                        ❌ Cancel (Delete)
+                    </button>
+                    <button onclick="searchStatus()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 transform hover:scale-105">
+                        🔍 Search (Find)
+                    </button>
+                    <button onclick="showAllOrders()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200 transform hover:scale-105">
+                        🔄 Show All (Traverse)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- DLL Visualization -->
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold text-gray-700 mb-4">Current Order Flow (DLL Visualization)</h3>
+                <div id="dllContainer" class="flex flex-wrap items-center space-x-2 p-6 bg-gray-100 border border-gray-300 rounded-xl overflow-x-auto min-h-[150px]">
+                    <div class="text-gray-500 italic p-4">List is empty. Add an order to start the linked list!</div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+        // --- 1. DLL Data Structure Implementation ---
+
+        class Node {
+            constructor(orderId, status, customerInfo) {
+                this.orderId = orderId;
+                this.status = status;
+                this.customerInfo = customerInfo || 'N/A';
+                this.prev = null;
+                this.next = null;
+            }
+        }
+
+        class DoublyLinkedList {
+            constructor() {
+                this.head = null;
+                this.tail = null;
+            }
+
+            // Operation: Insert Node (Add New Order at the end) - O(1)
+            insert(orderId, status, customerInfo) {
+                // Check for existing ID (O(N) search for validation)
+                if (this.find(orderId)) return false; 
+                
+                const newNode = new Node(orderId, status, customerInfo);
+
+                if (!this.head) {
+                    // If list is empty, new node is both head and tail
+                    this.head = newNode;
+                    this.tail = newNode;
+                    return true;
+                }
+
+                // Insert at the end, maintaining bi-directional links
+                this.tail.next = newNode;
+                newNode.prev = this.tail;
+                this.tail = newNode;
+                return true;
+            }
+
+            // Helper function to find a node by ID - O(N)
+            find(orderId) {
+                let current = this.head;
+                while (current) {
+                    if (current.orderId === orderId) {
+                        return current;
+                    }
+                    current = current.next;
+                }
+                return null;
+            }
+
+            // Operation: Delete Node (Cancel Order) - O(1) if node is found, O(N) overall due to search
+            deleteNode(orderId) {
+                const nodeToDelete = this.find(orderId);
+                if (!nodeToDelete) return false;
+
+                // Handle 'prev' pointer update
+                if (nodeToDelete.prev) {
+                    nodeToDelete.prev.next = nodeToDelete.next;
+                } else {
+                    // Deleting the head
+                    this.head = nodeToDelete.next;
+                }
+
+                // Handle 'next' pointer update
+                if (nodeToDelete.next) {
+                    nodeToDelete.next.prev = nodeToDelete.prev;
+                } else {
+                    // Deleting the tail
+                    this.tail = nodeToDelete.prev;
+                }
+                
+                // Cleanup (optional but good practice)
+                nodeToDelete.next = null;
+                nodeToDelete.prev = null;
+                
+                return true;
+            }
+
+            // Operation: Traverse (Show All Orders) - O(N)
+            traverse() {
+                let current = this.head;
+                const orders = [];
+                while (current) {
+                    orders.push({ 
+                        id: current.orderId, 
+                        status: current.status, 
+                        info: current.customerInfo 
+                    });
+                    current = current.next;
+                }
+                return orders;
+            }
+        }
+
+        // --- 2. Global Variables and Initialization ---
+
+        const dll = new DoublyLinkedList();
+        const dllContainer = document.getElementById('dllContainer');
+        const outputMessage = document.getElementById('outputMessage');
+
+        // Pre-populate the list with initial orders for demo
+        dll.insert(101, 'Confirmed', 'Avinash, Pune');
+        dll.insert(102, 'Shipped', 'Omkar, Mumbai');
+        dll.insert(103, 'Packed', 'Vinit, Delhi');
+        
+        // Initial setup on window load
+        window.onload = () => {
+            renderDLL();
+        };
+
+
+        // --- 3. UI Helper Functions ---
+        
+        // Function to update the main status message
+        function updateOutput(message, isError = false) {
+            outputMessage.textContent = message;
+            outputMessage.className = `p-4 mb-8 font-semibold text-center transition duration-300 
+                ${isError ? 'bg-red-100 text-red-700 border-red-400' : 'bg-green-100 text-green-700 border-green-400'}`;
+        }
+
+        // Function to render the DLL visually
+        function renderDLL() {
+            const orders = dll.traverse();
+            dllContainer.innerHTML = '';
+
+            if (orders.length === 0) {
+                dllContainer.innerHTML = '<div class="text-gray-500 italic p-4">The Order List is currently empty.</div>';
+                return;
+            }
+
+            // 1. Display HEAD pointer
+            const headIndicator = document.createElement('div');
+            headIndicator.className = 'text-base font-bold text-blue-600 self-center mr-2 transform -translate-y-4';
+            headIndicator.innerHTML = 'HEAD <span class="text-xl">→</span>';
+            dllContainer.appendChild(headIndicator);
+
+            orders.forEach((order, index) => {
+                // Determine status color for visual cue
+                let statusColor = 'bg-blue-100 text-blue-800';
+                if (order.status === 'Delivered') statusColor = 'bg-green-100 text-green-800';
+                if (order.status === 'Cancelled') statusColor = 'bg-red-100 text-red-800';
+
+                // Node Card
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = `node-card p-4 rounded-xl shadow-lg relative min-h-[100px] flex flex-col justify-between transform transition-transform duration-300`;
+                nodeDiv.innerHTML = `
+                    <div class="flex justify-between items-center border-b pb-1 mb-2">
+                        <p class="font-extrabold text-xl text-blue-800">ID: ${order.id}</p>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColor}">
+                            ${order.status}
+                        </span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-600">Customer:</p>
+                    <p class="text-xs text-gray-500 truncate">${order.info}</p>
+                `;
+                dllContainer.appendChild(nodeDiv);
+
+                // Link Arrow (if not the last node)
+                if (index < orders.length - 1) {
+                    const arrowSpan = document.createElement('span');
+                    arrowSpan.className = 'link-arrow font-bold';
+                    // Using a visually cleaner bi-directional symbol
+                    arrowSpan.innerHTML = '&#8644;'; 
+                    dllContainer.appendChild(arrowSpan);
+                }
+            });
+
+            // 2. Display NULL pointer at the end
+            const nullIndicator = document.createElement('div');
+            nullIndicator.className = 'text-base font-bold text-red-600 self-center ml-2 transform -translate-y-4';
+            nullIndicator.innerHTML = '<span class="text-xl">→</span> NULL';
+            dllContainer.appendChild(nullIndicator);
+        }
+
+        // --- 4. User Interaction Functions (Operations) ---
+
+        function getInputs() {
+            const orderId = parseInt(document.getElementById('orderId').value);
+            const status = document.getElementById('statusSelect').value;
+            const customerInfo = document.getElementById('customerInfo').value || 'Unknown Location';
+            return { orderId, status, customerInfo };
+        }
+
+        function addOrder() {
+            const { orderId, status, customerInfo } = getInputs();
+
+            if (!orderId || !status) {
+                return updateOutput('❌ Error: Order ID and Status are required to add a new order.', true);
+            }
+            
+            const success = dll.insert(orderId, status, customerInfo);
+            if (success) {
+                updateOutput(`✅ Success: New Order ID ${orderId} (${status}) has been INSERTED at the TAIL (end) of the list.`, false);
+                renderDLL();
+            } else {
+                 updateOutput(`❌ Error: Order ID ${orderId} already exists! Use 'Update Status' instead.`, true);
+            }
+        }
+
+        function searchStatus() {
+            const { orderId } = getInputs();
+
+            if (!orderId) {
+                return updateOutput('❌ Error: Enter an Order ID to search.', true);
+            }
+
+            const node = dll.find(orderId);
+            if (node) {
+                updateOutput(`🔍 Found! Order ID ${orderId} status is: ${node.status} (Customer: ${node.customerInfo}). This took O(N) traversal.`, false);
+            } else {
+                updateOutput(`❌ Not Found: Order ID ${orderId} does not exist in the list.`, true);
+            }
+        }
+
+        function updateStatus() {
+            const { orderId, status } = getInputs();
+
+            if (!orderId || !status) {
+                return updateOutput('❌ Error: Enter both Order ID and a New Status to update.', true);
+            }
+
+            const node = dll.find(orderId);
+            if (node) {
+                const oldStatus = node.status;
+                node.status = status;
+                updateOutput(`📝 Updated: Order ID ${orderId} status changed from ${oldStatus} to ${status}. This is O(1) after finding the node.`, false);
+                renderDLL(); // Re-render to highlight the change
+            } else {
+                updateOutput(`❌ Not Found: Cannot update. Order ID ${orderId} does not exist.`, true);
+            }
+        }
+
+        function deleteOrder() {
+            const { orderId } = getInputs();
+
+            if (!orderId) {
+                return updateOutput('❌ Error: Enter an Order ID to cancel/delete.', true);
+            }
+
+            const success = dll.deleteNode(orderId);
+            if (success) {
+                updateOutput(`❌ Cancelled: Order ID ${orderId} has been successfully DELETED (O(1) operation).`, false);
+                renderDLL();
+            } else {
+                updateOutput(`❌ Not Found: Cannot delete. Order ID ${orderId} was not found in the list.`, true);
+            }
+        }
+
+        function showAllOrders() {
+            const orders = dll.traverse();
+            if (orders.length === 0) {
+                 updateOutput('The list is empty. Nothing to traverse.', true);
+            } else {
+                 updateOutput(`🔄 Traversed: Showing all ${orders.length} orders currently in the system, from HEAD to TAIL (O(N) operation).`, false);
+            }
+            renderDLL();
+        }
+
+    </script>
+</body>
+</html>
